@@ -1,0 +1,11 @@
+namespace TaskFlow.Domain.Enums;
+
+public enum TaskPriority
+{
+    Low,
+    Medium,
+    High,
+    Critical
+}
+nano src/TaskFlow.Domain/Enums/TaskItemStatus.cs
+
