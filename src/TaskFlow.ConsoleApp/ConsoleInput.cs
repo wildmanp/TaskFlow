@@ -1,3 +1,4 @@
+
 using System.Globalization;
 using TaskFlow.Domain.Enums;
 
@@ -16,7 +17,8 @@ public static class ConsoleInput
         while (true)
         {
             Console.Write(prompt);
-            if (int.TryParse(Console.ReadLine(), out int value))
+
+            if (int.TryParse(Console.ReadLine(), out var value))
                 return value;
 
             Console.WriteLine("Please enter a whole number.");
@@ -28,17 +30,49 @@ public static class ConsoleInput
         while (true)
         {
             Console.Write("Priority (Low, Medium, High, Critical) [Medium]: ");
-            string? input = Console.ReadLine();
+            var input = Console.ReadLine();
 
             if (string.IsNullOrWhiteSpace(input))
                 return TaskPriority.Medium;
 
-            if (Enum.TryParse<TaskPriority>(
-                    input.Trim(), true, out var priority)
+            if (Enum.TryParse<TaskPriority>(input.Trim(), true, out var priority)
                 && Enum.IsDefined(priority))
                 return priority;
 
             Console.WriteLine("Unknown priority. Try again.");
+        }
+    }
+
+    public static TaskPriority? ReadOptionalPriority()
+    {
+        while (true)
+        {
+            Console.Write("Priority (Low, Medium, High, Critical, empty = keep): ");
+            var input = Console.ReadLine();
+
+            if (string.IsNullOrWhiteSpace(input))
+                return null;
+
+            if (Enum.TryParse<TaskPriority>(input.Trim(), true, out var priority)
+                && Enum.IsDefined(priority))
+                return priority;
+
+            Console.WriteLine("Unknown priority. Try again.");
+        }
+    }
+
+    public static TaskItemStatus ReadStatus()
+    {
+        while (true)
+        {
+            Console.Write("Status (Todo, InProgress, Done): ");
+            var input = Console.ReadLine();
+
+            if (Enum.TryParse<TaskItemStatus>(input?.Trim(), true, out var status)
+                && Enum.IsDefined(status))
+                return status;
+
+            Console.WriteLine("Unknown status. Try again.");
         }
     }
 
@@ -47,7 +81,7 @@ public static class ConsoleInput
         while (true)
         {
             Console.Write(prompt);
-            string? input = Console.ReadLine();
+            var input = Console.ReadLine();
 
             if (string.IsNullOrWhiteSpace(input))
                 return null;
@@ -57,11 +91,10 @@ public static class ConsoleInput
                     "yyyy-MM-dd",
                     CultureInfo.InvariantCulture,
                     DateTimeStyles.None,
-                    out DateTime date))
+                    out var date))
                 return date;
 
-            Console.WriteLine(
-                "Use the format yyyy-MM-dd, for example 2026-11-30.");
+            Console.WriteLine("Use the format yyyy-MM-dd, for example 2026-11-30.");
         }
     }
 }
