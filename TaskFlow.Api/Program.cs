@@ -4,7 +4,7 @@ using TaskFlow.Api.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// stocarea in memorie
 builder.Services.AddOpenApi();
 
 // Configure SQL Server.
@@ -14,7 +14,7 @@ builder.Services.AddDbContext<TaskFlowDbContext>(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// configura HTTP.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
