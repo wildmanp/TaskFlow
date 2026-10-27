@@ -25,11 +25,11 @@
 - Meniul nu se afisa corect si am corectat fisierul `Program.cs`
 
 ## Raspunsuri la intrebarile de autoverificare
-1. In C# `var` deduce tipul la compilare iar in JavaScript `let` permite schimbarea tipului in timpul executiei
-2. Lista afiseaza `1` deoarece `a` si `b` refera aceeasi lista iar pentru `int` valoarea lui `a` ramane `0`
-3. `string` este un tip referinta imuabil iar o modificare creeaza un sir nou
+1. In C# var deduce tipul la compilare iar in JavaScript let permite schimbarea tipului in timpul executiei
+2. Lista afiseaza 1 deoarece a si b refera aceeasi lista iar pentru int valoarea lui a ramane 0
+3. string este un tip referinta imuabil iar o modificare creeaza un sir nou
 4. Campul stocheaza valoarea iar proprietatea permite validarea ei prin `Title`
-5. `Status` are `private set` pentru a preveni schimbarea directa a starii
+5. Status are private set pentru a preveni schimbarea directa a starii
 6. Membrii unei clase sunt implicit `private` iar clasele de nivel superior sunt implicit `internal`
 7. `string?` permite valoarea `null` iar `DateTime?` este un tip valoare nullable
 8. `(TaskPriority)42` se compileaza deoarece conversia este permisa iar `Enum.IsDefined` verifica valoarea
