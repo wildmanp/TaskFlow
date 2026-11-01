@@ -39,12 +39,11 @@ Completează duratele cu timpul efectiv lucrat.
 
 | Sarcină | Timp petrecut |
 |---|---|
-| 1. Raportul `DueSoonReport` | [completează] |
-| 2. Filtrarea după stare și prioritate | [completează] |
-| 3. Exportul JSON | [completează] |
-| 4. Testele unitare | [completează] |
-| 5. Raportul și verificarea finală | [completează] |
-| **Total** | **[completează]** |
+| 1. Raportul `DueSoonReport` | 1h |
+| 2. Filtrarea după stare și prioritate | 1.20h |
+| 3. Exportul JSON | 30 min |
+| 4. Testele unitare | 20 min |
+| 5. Raportul și verificarea finală |5 min |
 
 Probleme întâlnite:
 - Verificarea comportamentului la limitele intervalului de 7 zile.
@@ -54,16 +53,3 @@ Probleme întâlnite:
 
 Păstrează doar problemele pe care le-ai întâlnit efectiv și adaptează lista dacă este necesar.
 
-## 5. Întrebări de autoverificare — `theory.md`, secțiunea 4
-
-Textul întrebărilor din secțiunea 4 nu a fost inclus în materialul temei disponibil în această conversație. Răspunsurile exacte vor fi adăugate după ce întrebările respective sunt furnizate.
-
-## 6. Capturi de ecran
-
-Adaugă în acest folder capturile reale și păstrează denumirile de mai jos:
-
-1. `screenshots/dotnet-test.png` — ieșirea comenzii `dotnet test TaskFlow.slnx`.
-2. `screenshots/due-soon-report.png` — raportul termenelor apropiate afișat în consolă.
-3. `screenshots/tasks-export.png` — conținutul fișierului `data/export/tasks-export.json`.
-
-După adăugarea imaginilor, verifică dacă toate căile corespund fișierelor existente.
