@@ -10,11 +10,11 @@
 
 | Principiu | Clasă și fișier din proiect | Explicație |
 |---|---|---|
-| S — Single Responsibility | `TaskExporter` — `src/TaskFlow.Domain/Services/TaskExporter.cs` | Clasa are responsabilitatea de a transforma sarcinile în rânduri de export și de a le serializa în JSON. |
-| O — Open/Closed | `DueSoonReport` — `src/TaskFlow.Domain/Reports/DueSoonReport.cs` | Raportul nou extinde funcționalitatea printr-o clasă nouă, fără modificarea rapoartelor existente. |
-| L — Liskov Substitution | `InMemoryTaskRepository` — `src/TaskFlow.Domain/Repositories/InMemoryTaskRepository.cs` | Implementarea respectă contractul `ITaskRepository` și poate fi folosită de serviciu în locul altei implementări compatibile. |
-| I — Interface Segregation | `INotifier` — `src/TaskFlow.Domain/Abstractions/INotifier.cs` și `ITaskRepository` — `src/TaskFlow.Domain/Abstractions/ITaskRepository.cs` | Responsabilitățile sunt separate în interfețe distincte pentru notificări și accesul la sarcini. |
-| D — Dependency Inversion | `TaskService` — `src/TaskFlow.Domain/Services/TaskService.cs` | Serviciul depinde de abstracțiile `ITaskRepository` și `INotifier`, nu direct de implementările concrete. |
+| S — Single Responsibility | `TaskExporter` — `src/TaskFlow.Domain/Services/TaskExporter.cs` | Clasa are responsabilitatea de a transforma sarcinile în randuri de export  |
+| O — Open/Closed | `DueSoonReport` — `src/TaskFlow.Domain/Reports/DueSoonReport.cs` | Raportul nou extinde funcționalitatea printr-o clasă nouă |
+| L — Liskov Substitution | `InMemoryTaskRepository` — `src/TaskFlow.Domain/Repositories/InMemoryTaskRepository.cs` | Implementarea respectă contractul ITaskRepository  |
+| I — Interface Segregation | `INotifier` — `src/TaskFlow.Domain/Abstractions/INotifier.cs` și `ITaskRepository` — `src/TaskFlow.Domain/Abstractions/ITaskRepository.cs` | Responsabilitățile sunt separate in interfeee  |
+| D — Dependency Inversion | `TaskService` — `src/TaskFlow.Domain/Services/TaskService.cs` | Serviciul depinde de abstracțiile ITaskRepository și INotifier  |
 
 ## 3. Cum schimbăm locul de stocare a sarcinilor?
 
