@@ -17,10 +17,7 @@ Aș adăuga implementarea nouă și aș modifica selecția repository-ului din `
 
 Numerele de linie sunt cele verificate în versiunea curentă a proiectului și se pot schimba după modificări ulterioare.
 
-## 4. Timpul petrecut și probleme întâlnite
-
-Completează duratele cu timpul efectiv lucrat.
-
+Timpul petrecut și probleme întâlnite
 | Sarcină | Timp petrecut |
 |---|---|
 | 1. Raportul `DueSoonReport` | 1h |
