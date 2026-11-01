@@ -31,6 +31,3 @@ Probleme întâlnite:
 - Testarea comportamentului pentru date fixe, fără folosirea `DateTime.Now` în teste.
 - Verificarea compatibilității noilor funcționalități cu interfețele existente.
 - Pregătirea capturilor de ecran și documentarea rezultatelor.
-
-Păstrează doar problemele pe care le-ai întâlnit efectiv și adaptează lista dacă este necesar.
-
