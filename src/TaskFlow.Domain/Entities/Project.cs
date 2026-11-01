@@ -1,7 +1,7 @@
 
 namespace TaskFlow.Domain.Entities;
 
-public class Project
+public class Project : BaseEntity
 {
     public const int NameMaxLength = 100;
 
@@ -11,12 +11,8 @@ public class Project
     {
         Name = name;
         Description = description;
-        CreatedAt = DateTime.Now;
     }
 
-    public int Id { get; set; }
-
-    public DateTime CreatedAt { get; private set; }
 
     public string Name
     {

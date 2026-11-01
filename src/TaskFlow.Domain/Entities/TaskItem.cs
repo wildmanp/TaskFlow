@@ -1,9 +1,10 @@
 
+using System.Text.Json.Serialization;
 using TaskFlow.Domain.Enums;
 
 namespace TaskFlow.Domain.Entities;
 
-public class TaskItem
+public class TaskItem : BaseEntity
 {
     public const int TitleMaxLength = 200;
     public const int DescriptionMaxLength = 2000;
@@ -11,6 +12,11 @@ public class TaskItem
     private string _title = string.Empty;
     private string? _description;
     private TaskPriority _priority;
+
+    [JsonConstructor]
+    private TaskItem()
+    {
+    }
 
     public TaskItem(
         string title,
@@ -23,12 +29,7 @@ public class TaskItem
         DueDate = dueDate;
         Description = description;
         Status = TaskItemStatus.Todo;
-        CreatedAt = DateTime.Now;
     }
-
-    public int Id { get; set; }
-
-    public DateTime CreatedAt { get; private set; }
 
     public string Title
     {
@@ -78,14 +79,17 @@ public class TaskItem
         }
     }
 
+    [JsonInclude]
     public TaskItemStatus Status { get; private set; }
 
     public DateTime? DueDate { get; set; }
 
+    [JsonInclude]
     public DateTime? CompletedAt { get; private set; }
 
     public int? ProjectId { get; set; }
 
+    [JsonIgnore]
     public Project? Project { get; set; }
 
     public void Start()
@@ -132,4 +136,3 @@ public class TaskItem
         return $"#{Id} [{Status}] {Title} (priority: {Priority}, due: {due})";
     }
 }
-
