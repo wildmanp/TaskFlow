@@ -1,12 +1,9 @@
-# Săptămâna 02 — Tema pentru acasă TaskFlow
-
-## 1. Rezultate
+1. Rezultate
 
 - Build: reușit (`dotnet build TaskFlow.slnx`).
 - Teste: 16 reușite, 0 eșuate, 0 omise.
-- Funcționalități implementate: raportul termenelor apropiate, filtrarea după stare și prioritate, exportul JSON și teste unitare suplimentare.
 
-## 2. Principiile SOLID
+2. Principiile SOLID
 
 | Principiu | Clasă și fișier din proiect | Explicație |
 |---|---|---|
@@ -15,19 +12,6 @@
 | L — Liskov Substitution | `InMemoryTaskRepository` — `src/TaskFlow.Domain/Repositories/InMemoryTaskRepository.cs` | Implementarea respectă contractul ITaskRepository  |
 | I — Interface Segregation | `INotifier` — `src/TaskFlow.Domain/Abstractions/INotifier.cs` și `ITaskRepository` — `src/TaskFlow.Domain/Abstractions/ITaskRepository.cs` | Responsabilitățile sunt separate in interfeee  |
 | D — Dependency Inversion | `TaskService` — `src/TaskFlow.Domain/Services/TaskService.cs` | Serviciul depinde de abstracțiile ITaskRepository și INotifier  |
-
-## 3. Cum schimbăm locul de stocare a sarcinilor?
-
-Pentru a folosi o bază de date în locul stocării actuale, aș crea o implementare nouă, de exemplu `SqlTaskRepository`, care implementează interfața `ITaskRepository`.
-
-Fișiere și linii relevante:
-
-- `src/TaskFlow.Domain/Abstractions/ITaskRepository.cs`, linia 6: interfața care definește contractul repository-ului.
-- `src/TaskFlow.Domain/Repositories/InMemoryTaskRepository.cs`, linia 7: implementarea în memorie.
-- `src/TaskFlow.Domain/Repositories/JsonFileTaskRepository.cs`, linia 9: implementarea bazată pe fișier JSON.
-- `src/TaskFlow.ConsoleApp/Program.cs`, liniile 18–20: alegerea implementării repository-ului.
-- `src/TaskFlow.ConsoleApp/Program.cs`, linia 28: crearea serviciului cu repository-ul selectat.
-- `src/TaskFlow.Domain/Services/TaskService.cs`, linia 8: serviciul implementează `ITaskService` și utilizează abstracțiile domeniului.
 
 Aș adăuga implementarea nouă și aș modifica selecția repository-ului din `Program.cs` pentru a folosi baza de date. Dacă noua implementare respectă contractul existent, logica principală din `TaskService` nu ar trebui să fie rescrisă.
 
