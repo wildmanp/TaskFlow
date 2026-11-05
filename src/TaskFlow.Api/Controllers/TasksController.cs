@@ -127,7 +127,6 @@ public sealed class TasksController(
         [FromBody] ChangeStatusRequest request,
         CancellationToken cancellationToken)
     {
-        // [Required] a garantat deja că Status nu este null
         var newStatus = request.Status!.Value;
 
         try
