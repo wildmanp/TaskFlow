@@ -1,142 +1,83 @@
-
 using TaskFlow.Domain.Abstractions;
 using TaskFlow.Domain.Entities;
 using TaskFlow.Domain.Enums;
 
 namespace TaskFlow.Domain.Services;
 
-public class TaskService : ITaskService
+public sealed class TaskService(ITaskRepository repository, TimeProvider timeProvider) : ITaskService
 {
-    private readonly ITaskRepository _repository;
-    private readonly INotifier _notifier;
-    private readonly TimeProvider _timeProvider;
-
-    public TaskService(
-        ITaskRepository repository,
-        INotifier notifier,
-        TimeProvider timeProvider)
+    public async Task<IReadOnlyList<TaskItem>> GetAllAsync(TaskFilter filter, CancellationToken ct = default)
     {
-        _repository = repository;
-        _notifier = notifier;
-        _timeProvider = timeProvider;
-    }
+        ArgumentNullException.ThrowIfNull(filter);
 
-    public TaskItem Create(
-        string title,
-        TaskPriority priority,
-        DateTime? dueDate,
-        string? description = null)
-    {
-        DateTime now = _timeProvider.GetLocalNow().DateTime;
+        var tasks = await repository.GetAllAsync(ct);
+        IEnumerable<TaskItem> query = tasks;
 
-        if (dueDate.HasValue && dueDate.Value.Date < now.Date)
+        if (filter.Status is { } status)
+            query = query.Where(t => t.Status == status);
+        if (filter.Priority is { } priority)
+            query = query.Where(t => t.Priority == priority);
+        if (filter.ProjectId is { } projectId)
+            query = query.Where(t => t.ProjectId == projectId);
+        if (!string.IsNullOrWhiteSpace(filter.Search))
         {
-            throw new ArgumentException(
-                "Due date cannot be in the past.", nameof(dueDate));
+            var term = filter.Search.Trim();
+            query = query.Where(t =>
+                t.Title.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                (t.Description?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false));
         }
 
-        TaskItem task = new(title, priority, dueDate, description);
+        return query.OrderBy(t => t.Id).ToList();
+    }
 
-        _repository.Add(task);
-        _notifier.Notify($"Task created: {task.Title} (ID: {task.Id})");
+    public Task<TaskItem?> GetByIdAsync(int id, CancellationToken ct = default) =>
+        repository.GetByIdAsync(id, ct);
 
+    public async Task<TaskItem> CreateAsync(TaskItem task, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(task);
+        task.CreatedAt = timeProvider.GetUtcNow().UtcDateTime;
+        await repository.AddAsync(task, ct);
         return task;
     }
 
-    public IReadOnlyList<TaskItem> GetAll() => _repository.GetAll();
-
-    public IReadOnlyList<TaskItem> Search(string text)
+    public async Task<bool> UpdateAsync(TaskItem task, CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(text);
-
-        return _repository.GetAll()
-            .Where(task => task.Title.Contains(
-                text, StringComparison.OrdinalIgnoreCase))
-            .ToList();
-    }
-
-    public void Start(int id)
-    {
-        TaskItem task = GetTaskOrThrow(id);
-
-        int inProgressCount = _repository.GetAll()
-            .Count(item => item.Status == TaskItemStatus.InProgress);
-
-        if (task.Status != TaskItemStatus.InProgress &&
-            inProgressCount >= 3)
-        {
-            throw new InvalidOperationException(
-                "You cannot have more than 3 tasks in progress.");
-        }
-
-        task.Start();
-        _repository.Update(task);
-        _notifier.Notify($"Task started: {task.Title} (ID: {task.Id})");
-    }
-
-    public void Complete(int id)
-    {
-        TaskItem task = GetTaskOrThrow(id);
-        task.Complete(_timeProvider.GetLocalNow().DateTime);
-        _repository.Update(task);
-        _notifier.Notify($"Task completed: {task.Title} (ID: {task.Id})");
-    }
-
-    public void Reopen(int id)
-    {
-        TaskItem task = GetTaskOrThrow(id);
-        task.Reopen();
-        _repository.Update(task);
-        _notifier.Notify($"Task reopened: {task.Title} (ID: {task.Id})");
-    }
-
-    public bool Delete(int id)
-    {
-        TaskItem? task = _repository.GetById(id);
-
-        if (task is null || !_repository.Delete(id))
+        ArgumentNullException.ThrowIfNull(task);
+        var existing = await repository.GetByIdAsync(task.Id, ct);
+        if (existing is null)
             return false;
 
-        _notifier.Notify($"Task deleted: {task.Title} (ID: {task.Id})");
+        await repository.UpdateAsync(task, ct);
         return true;
     }
 
-    public void Update(TaskItem task)
+    public async Task<TaskItem?> ChangeStatusAsync(int id, TaskItemStatus newStatus, CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(task);
+        var task = await repository.GetByIdAsync(id, ct);
+        if (task is null)
+            return null;
 
-        _repository.Update(task);
-        _notifier.Notify(
-            $"Task updated: {task.Title} (ID: {task.Id})");
+        // Tranziție nepermisă: metodele domeniului aruncă InvalidOperationException
+        switch (newStatus)
+        {
+            case TaskItemStatus.InProgress:
+                task.Start();
+                break;
+            case TaskItemStatus.Done:
+                task.Complete(timeProvider.GetUtcNow().UtcDateTime);
+                break;
+            case TaskItemStatus.Todo:
+                task.Reopen();
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(newStatus), newStatus, "Unknown task status.");
+        }
+
+        await repository.UpdateAsync(task, ct);
+        return task;
     }
 
-    public bool HasOverdue()
-    {
-        DateTime now = _timeProvider.GetLocalNow().DateTime;
-        return _repository.GetAll().Any(task => task.IsOverdue(now));
-    }
-
-    public IReadOnlyDictionary<TaskItemStatus, int> CountByStatus()
-    {
-        return _repository.GetAll()
-            .GroupBy(task => task.Status)
-            .ToDictionary(group => group.Key, group => group.Count());
-    }
-
-    private TaskItem GetTaskOrThrow(int id)
-    {
-        return _repository.GetById(id)
-            ?? throw new KeyNotFoundException(
-                $"Task with ID {id} was not found.");
-    }
-    public IReadOnlyList<TaskItem> Filter(
-    TaskItemStatus? status,
-    TaskPriority? priority)
-{
-    return _repository.GetAll()
-        .Where(t =>
-            (status is null || t.Status == status) &&
-            (priority is null || t.Priority == priority))
-        .ToList();
-}
+    public Task<bool> DeleteAsync(int id, CancellationToken ct = default) =>
+        repository.DeleteAsync(id, ct);
 }

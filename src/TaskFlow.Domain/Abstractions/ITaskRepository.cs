@@ -1,17 +1,12 @@
-
 using TaskFlow.Domain.Entities;
 
 namespace TaskFlow.Domain.Abstractions;
 
 public interface ITaskRepository
 {
-    IReadOnlyList<TaskItem> GetAll();
-
-    TaskItem? GetById(int id);
-
-    void Add(TaskItem task);
-
-    void Update(TaskItem task);
-
-   bool Delete(int id);
+    Task<IReadOnlyList<TaskItem>> GetAllAsync(CancellationToken ct = default);
+    Task<TaskItem?> GetByIdAsync(int id, CancellationToken ct = default);
+    Task AddAsync(TaskItem task, CancellationToken ct = default);
+    Task UpdateAsync(TaskItem task, CancellationToken ct = default);
+    Task<bool> DeleteAsync(int id, CancellationToken ct = default);
 }

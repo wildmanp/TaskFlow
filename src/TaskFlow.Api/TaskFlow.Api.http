@@ -1,0 +1,194 @@
+@baseUrl = http://localhost:5080
+
+### 1. Lista sarcinilor
+GET {{baseUrl}}/api/tasks
+Accept: application/json
+
+### 2. Creează un proiect
+# @name createProject
+POST {{baseUrl}}/api/projects
+Content-Type: application/json
+
+{
+  "name": "TaskFlow",
+  "description": "Proiectul de curs"
+}
+
+### 3. Proiect cu același nume: 409
+POST {{baseUrl}}/api/projects
+Content-Type: application/json
+
+{
+  "name": "taskflow"
+}
+
+### 4. Creează un al doilea proiect
+# @name createSecondProject
+POST {{baseUrl}}/api/projects
+Content-Type: application/json
+
+{
+  "name": "Website"
+}
+
+### 5. Creează o sarcină în proiect
+# @name createTask
+POST {{baseUrl}}/api/tasks
+Content-Type: application/json
+
+{
+  "title": "Write the API",
+  "description": "Week 3 homework",
+  "priority": "High",
+  "dueDate": "2026-11-01T18:00:00Z",
+  "projectId": {{createProject.response.body.$.id}}
+}
+
+### 6. Citește sarcina creată
+GET {{createTask.response.headers.Location}}
+
+### 7. Sarcină invalidă: 400
+POST {{baseUrl}}/api/tasks
+Content-Type: application/json
+
+{
+  "title": ""
+}
+
+### 8. Prioritate necunoscută: 400
+POST {{baseUrl}}/api/tasks
+Content-Type: application/json
+
+{
+  "title": "Bad priority",
+  "priority": "Urgent"
+}
+
+### 9. ProjectId inexistent: 400
+POST {{baseUrl}}/api/tasks
+Content-Type: application/json
+
+{
+  "title": "Task with invalid project",
+  "projectId": 999999
+}
+
+### 10. Filtrare după status, prioritate și text
+GET {{baseUrl}}/api/tasks?status=Todo&priority=High&search=api
+
+### 11. Actualizează sarcina: 204
+PUT {{baseUrl}}/api/tasks/{{createTask.response.body.$.id}}
+Content-Type: application/json
+
+{
+  "title": "Write the API (updated)",
+  "description": "Week 3 homework",
+  "priority": "Critical",
+  "dueDate": "2026-11-02T18:00:00Z",
+  "projectId": {{createProject.response.body.$.id}}
+}
+
+### 12. Începe lucrul: 204
+PATCH {{baseUrl}}/api/tasks/{{createTask.response.body.$.id}}/status
+Content-Type: application/json
+
+{
+  "status": "InProgress"
+}
+
+### 13. Încearcă din nou: 409
+PATCH {{baseUrl}}/api/tasks/{{createTask.response.body.$.id}}/status
+Content-Type: application/json
+
+{
+  "status": "InProgress"
+}
+
+### 14. Finalizează: 204
+PATCH {{baseUrl}}/api/tasks/{{createTask.response.body.$.id}}/status
+Content-Type: application/json
+
+{
+  "status": "Done"
+}
+
+### 15. Sarcinile proiectului
+GET {{baseUrl}}/api/projects/{{createProject.response.body.$.id}}/tasks
+
+### 16. Sarcină inexistentă: 404
+GET {{baseUrl}}/api/tasks/999999
+
+### 17. Actualizează proiectul: 204
+PUT {{baseUrl}}/api/projects/{{createProject.response.body.$.id}}
+Content-Type: application/json
+
+{
+  "name": "TaskFlow Updated"
+}
+
+### 18. Nume deja folosit de alt proiect: 409
+PUT {{baseUrl}}/api/projects/{{createSecondProject.response.body.$.id}}
+Content-Type: application/json
+
+{
+  "name": "TaskFlow Updated"
+}
+
+### 19. Șterge proiectul care încă are sarcini: 409
+DELETE {{baseUrl}}/api/projects/{{createProject.response.body.$.id}}
+
+### 20. Șterge sarcina: 204
+DELETE {{baseUrl}}/api/tasks/{{createTask.response.body.$.id}}
+
+### 21. Șterge proiectul: 204
+DELETE {{baseUrl}}/api/projects/{{createProject.response.body.$.id}}
+
+### 22. Șterge proiectul deja șters: 404
+DELETE {{baseUrl}}/api/projects/{{createProject.response.body.$.id}}
+
+### 23. Lista tagurilor
+GET {{baseUrl}}/api/tags
+
+### 24. Creează un tag
+# @name createTag
+POST {{baseUrl}}/api/tags
+Content-Type: application/json
+
+{
+  "name": "Backend"
+}
+
+### 25. Creează un tag duplicat: 409
+POST {{baseUrl}}/api/tags
+Content-Type: application/json
+
+{
+  "name": "backend"
+}
+
+### 26. Tag invalid: 400
+POST {{baseUrl}}/api/tags
+Content-Type: application/json
+
+{
+  "name": ""
+}
+
+### 27. Citește tagul creat
+GET {{createTag.response.headers.Location}}
+
+### 28. Tag inexistent: 404
+GET {{baseUrl}}/api/tags/999999
+
+### 29. Durata de viață a serviciilor
+GET {{baseUrl}}/api/diagnostics/lifetimes
+
+### 30. ArgumentException: 400
+GET {{baseUrl}}/api/diagnostics/boom?kind=argument
+
+### 31. Excepție netratată: 500
+GET {{baseUrl}}/api/diagnostics/boom
+
+### 32. Verifică antetul CorrelationId
+GET {{baseUrl}}/api/tasks
+X-Correlation-Id: TaskFlow-Test-123

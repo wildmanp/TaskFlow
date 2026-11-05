@@ -1,98 +1,103 @@
-
+using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Unicode;
 using TaskFlow.Domain.Abstractions;
 using TaskFlow.Domain.Entities;
-using TaskFlow.Domain.Serialization;
 
 namespace TaskFlow.Domain.Repositories;
 
-public class JsonFileTaskRepository : ITaskRepository
+public sealed class JsonFileTaskRepository : ITaskRepository
 {
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        WriteIndented = true,
+        Encoder = JavaScriptEncoder.Create(UnicodeRanges.All),
+        Converters = { new JsonStringEnumConverter() }
+    };
+
     private readonly string _filePath;
-    private readonly List<TaskItem> _tasks;
-    private int _nextId;
+    private readonly InMemoryTaskRepository _inner;
+    // SemaphoreSlim, nu lock: în secțiunea critică există await
+    private readonly SemaphoreSlim _gate = new(1, 1);
 
     public JsonFileTaskRepository(string filePath)
     {
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            throw new ArgumentException("Calea fișierului este obligatorie.", nameof(filePath));
+        }
+
         _filePath = filePath;
-
-        string? directory = Path.GetDirectoryName(_filePath);
-
-        if (!string.IsNullOrWhiteSpace(directory))
-        {
-            Directory.CreateDirectory(directory);
-        }
-
-        if (File.Exists(_filePath))
-        {
-            string json = File.ReadAllText(_filePath);
-
-            _tasks = JsonSerializer.Deserialize<List<TaskItem>>(
-                json, JsonOptions.Default) ?? new List<TaskItem>();
-        }
-        else
-        {
-            _tasks = new List<TaskItem>();
-        }
-
-        _nextId = _tasks.Count == 0 ? 1 : _tasks.Max(task => task.Id) + 1;
+        _inner = new InMemoryTaskRepository(Load());
     }
 
-    public IReadOnlyList<TaskItem> GetAll() => _tasks.AsReadOnly();
+    public Task<IReadOnlyList<TaskItem>> GetAllAsync(CancellationToken ct = default) => _inner.GetAllAsync(ct);
 
-    public TaskItem? GetById(int id) =>
-        _tasks.FirstOrDefault(task => task.Id == id);
+    public Task<TaskItem?> GetByIdAsync(int id, CancellationToken ct = default) => _inner.GetByIdAsync(id, ct);
 
-    public void Add(TaskItem task)
+    public async Task AddAsync(TaskItem task, CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(task);
-
-        if (_tasks.Any(existing => existing.Id == task.Id && task.Id != 0))
-        {
-            throw new InvalidOperationException(
-                $"Task with ID {task.Id} already exists.");
-        }
-
-        if (task.Id == 0)
-        {
-            task.Id = _nextId++;
-        }
-
-        _tasks.Add(task);
-        Save();
+        await _inner.AddAsync(task, ct);
+        await SaveAsync(ct);
     }
 
-    public void Update(TaskItem task)
+    public async Task UpdateAsync(TaskItem task, CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(task);
-
-        int index = _tasks.FindIndex(existing => existing.Id == task.Id);
-
-        if (index < 0)
-        {
-            throw new InvalidOperationException(
-                $"Task with ID {task.Id} was not found.");
-        }
-
-        _tasks[index] = task;
-        Save();
+        await _inner.UpdateAsync(task, ct);
+        await SaveAsync(ct);
     }
 
-   public bool Delete(int id)
-{
-    TaskItem? task = GetById(id);
-
-    if (task is null)
-        return false;
-
-    _tasks.Remove(task);
-    Save();
-    return true;
-}
-
-    private void Save()
+    public async Task<bool> DeleteAsync(int id, CancellationToken ct = default)
     {
-        string json = JsonSerializer.Serialize(_tasks, JsonOptions.Default);
-        File.WriteAllText(_filePath, json);
+        bool deleted = await _inner.DeleteAsync(id, ct);
+
+        if (deleted)
+        {
+            await SaveAsync(ct);
+        }
+
+        return deleted;
+    }
+
+    // Constructorul nu poate fi async, de aceea fișierul se citește sincron, ca în săptămâna 2
+    private List<TaskItem> Load()
+    {
+        if (!File.Exists(_filePath))
+        {
+            return new List<TaskItem>();
+        }
+
+        string json = File.ReadAllText(_filePath);
+
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return new List<TaskItem>();
+        }
+
+        return JsonSerializer.Deserialize<List<TaskItem>>(json, JsonOptions) ?? new List<TaskItem>();
+    }
+
+    private async Task SaveAsync(CancellationToken ct)
+    {
+        await _gate.WaitAsync(ct);
+
+        try
+        {
+            string? directory = Path.GetDirectoryName(_filePath);
+
+            if (!string.IsNullOrEmpty(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            IReadOnlyList<TaskItem> tasks = await _inner.GetAllAsync(ct);
+            await using FileStream stream = File.Create(_filePath);
+            await JsonSerializer.SerializeAsync(stream, tasks, JsonOptions, ct);
+        }
+        finally
+        {
+            _gate.Release();
+        }
     }
 }
