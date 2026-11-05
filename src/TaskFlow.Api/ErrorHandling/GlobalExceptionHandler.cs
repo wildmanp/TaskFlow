@@ -17,7 +17,6 @@ public sealed class GlobalExceptionHandler(
 
         httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
 
-        // Clientului nu îi trimitem textul excepției: doar un titlu general și traceId
         return await problemDetailsService.TryWriteAsync(new ProblemDetailsContext
         {
             HttpContext = httpContext,
