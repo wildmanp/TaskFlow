@@ -19,7 +19,6 @@ public sealed class RequestTimingMiddleware(
 
         if (settings.AddResponseHeader)
         {
-            // Antetele pot fi modificate doar înainte de începerea trimiterii răspunsului
             context.Response.OnStarting(() =>
             {
                 context.Response.Headers[HeaderName] =
