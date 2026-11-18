@@ -1,3 +1,4 @@
+
 using Microsoft.AspNetCore.Mvc;
 using TaskFlow.Api.Mappings;
 using TaskFlow.Domain.Abstractions;
@@ -17,6 +18,7 @@ public sealed class TagsController(
         CancellationToken cancellationToken)
     {
         var tags = await tagService.GetAllAsync(cancellationToken);
+
         return Ok(tags.Select(t => t.ToDto()).ToList());
     }
 
@@ -46,7 +48,8 @@ public sealed class TagsController(
         try
         {
             var created = await tagService.CreateAsync(
-                request.ToEntity(), cancellationToken);
+                request.ToEntity(),
+                cancellationToken);
 
             logger.LogInformation("Tag {TagId} created", created.Id);
 

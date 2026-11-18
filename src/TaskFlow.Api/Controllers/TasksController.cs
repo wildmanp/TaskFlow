@@ -29,6 +29,31 @@ public sealed class TasksController(
 
         var now = Now();
         var result = tasks.Select(t => t.ToDto(now)).ToList();
+
+        return Ok(result);
+    }
+
+    [HttpGet("stats")]
+    [ProducesResponseType<TaskStatsDto>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<TaskStatsDto>> GetStats(
+        CancellationToken cancellationToken)
+    {
+        var statistics = await taskService.GetStatisticsAsync(cancellationToken);
+
+        var result = new TaskStatsDto(
+            TotalTasks: statistics.TotalTasks,
+            TasksByStatus: statistics.TasksByStatus
+                .Select(x => new TaskStatusCountDto(
+                    x.Key.ToString(),
+                    x.Value))
+                .ToList(),
+            TasksByPriority: statistics.TasksByPriority
+                .Select(x => new TaskPriorityCountDto(
+                    x.Key.ToString(),
+                    x.Value))
+                .ToList(),
+            OverdueTasks: statistics.OverdueTasks);
+
         return Ok(result);
     }
 
@@ -40,6 +65,7 @@ public sealed class TasksController(
         CancellationToken cancellationToken)
     {
         var task = await taskService.GetByIdAsync(id, cancellationToken);
+
         if (task is null)
             return NotFound();
 
@@ -91,6 +117,7 @@ public sealed class TasksController(
         CancellationToken cancellationToken)
     {
         var task = await taskService.GetByIdAsync(id, cancellationToken);
+
         if (task is null)
             return NotFound();
 
@@ -156,6 +183,35 @@ public sealed class TasksController(
         }
     }
 
+    [HttpPut("{id:int}/tags")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ReplaceTags(
+        int id,
+        [FromBody] List<int> tagIds,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var replaced = await taskService.ReplaceTagsAsync(
+                id, tagIds, cancellationToken);
+
+            if (!replaced)
+                return NotFound();
+
+            logger.LogInformation("Tags replaced for task {TaskId}", id);
+
+            return NoContent();
+        }
+        catch (ArgumentException ex)
+        {
+            ModelState.AddModelError(nameof(tagIds), ex.Message);
+
+            return ValidationProblem(ModelState);
+        }
+    }
+
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
@@ -164,10 +220,12 @@ public sealed class TasksController(
         CancellationToken cancellationToken)
     {
         var deleted = await taskService.DeleteAsync(id, cancellationToken);
+
         if (!deleted)
             return NotFound();
 
         logger.LogInformation("Task {TaskId} deleted", id);
+
         return NoContent();
     }
 

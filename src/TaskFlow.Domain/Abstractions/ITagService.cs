@@ -1,10 +1,16 @@
-using TaskFlow.Domain.Entities;
 
 namespace TaskFlow.Domain.Abstractions;
 
 public interface ITagService
 {
-    Task<IReadOnlyList<Tag>> GetAllAsync(CancellationToken ct = default);
-    Task<Tag?> GetByIdAsync(int id, CancellationToken ct = default);
-    Task<Tag> CreateAsync(Tag tag, CancellationToken ct = default);
+    Task<IReadOnlyList<TagSummary>> GetAllAsync(
+        CancellationToken ct = default);
+
+    Task<TagSummary?> GetByIdAsync(
+        int id,
+        CancellationToken ct = default);
+
+    Task<TagSummary> CreateAsync(
+        TaskFlow.Domain.Entities.Tag tag,
+        CancellationToken ct = default);
 }

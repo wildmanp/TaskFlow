@@ -1,3 +1,4 @@
+
 using TaskFlow.Domain.Abstractions;
 using TaskFlow.Domain.Entities;
 
@@ -5,26 +6,37 @@ namespace TaskFlow.Domain.Services;
 
 public sealed class TagService(ITagRepository repository) : ITagService
 {
-    public async Task<IReadOnlyList<Tag>> GetAllAsync(CancellationToken ct = default)
+    public Task<IReadOnlyList<TagSummary>> GetAllAsync(
+        CancellationToken ct = default)
     {
-        var tags = await repository.GetAllAsync(ct);
-        return tags.OrderBy(t => t.Name).ToList();
+        return repository.GetSummariesAsync(ct);
     }
 
-    public Task<Tag?> GetByIdAsync(int id, CancellationToken ct = default)
-        => repository.GetByIdAsync(id, ct);
+    public async Task<TagSummary?> GetByIdAsync(
+        int id,
+        CancellationToken ct = default)
+    {
+        var summaries = await repository.GetSummariesAsync(ct);
 
-    public async Task<Tag> CreateAsync(Tag tag, CancellationToken ct = default)
+        return summaries.FirstOrDefault(t => t.Id == id);
+    }
+
+    public async Task<TagSummary> CreateAsync(
+        Tag tag,
+        CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(tag);
 
         var existing = await repository.GetByNameAsync(tag.Name, ct);
 
         if (existing is not null)
+        {
             throw new InvalidOperationException(
                 $"A tag named '{tag.Name}' already exists.");
+        }
 
         await repository.AddAsync(tag, ct);
-        return tag;
+
+        return new TagSummary(tag.Id, tag.Name, 0);
     }
 }

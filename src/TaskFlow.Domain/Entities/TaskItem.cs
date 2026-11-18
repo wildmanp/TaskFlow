@@ -92,6 +92,10 @@ public class TaskItem : BaseEntity
     [JsonIgnore]
     public Project? Project { get; set; }
 
+    // Navigare mulți-la-mulți (tabelul TaskItemTags); nu se scrie în fișierul JSON
+    [JsonIgnore]
+    public List<Tag> Tags { get; } = new();
+
     public void Start()
     {
         if (Status != TaskItemStatus.Todo)

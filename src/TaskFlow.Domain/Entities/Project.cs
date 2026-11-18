@@ -4,6 +4,8 @@ namespace TaskFlow.Domain.Entities;
 public class Project : BaseEntity
 {
     public const int NameMaxLength = 100;
+    public const int DescriptionMaxLength = 2000;
+    public const int ColorMaxLength = 7;
 
     private string _name = string.Empty;
 
@@ -12,7 +14,6 @@ public class Project : BaseEntity
         Name = name;
         Description = description;
     }
-
 
     public string Name
     {
@@ -34,6 +35,8 @@ public class Project : BaseEntity
     }
 
     public string? Description { get; set; }
+
+    public string? Color { get; set; }
 
     public List<TaskItem> Tasks { get; } = new();
 
@@ -63,4 +66,3 @@ public class Project : BaseEntity
         return count;
     }
 }
-

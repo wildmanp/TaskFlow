@@ -1,4 +1,7 @@
+
 using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Scalar.AspNetCore;
 using TaskFlow.Api.Diagnostics;
 using TaskFlow.Api.ErrorHandling;
@@ -7,8 +10,27 @@ using TaskFlow.Api.Options;
 using TaskFlow.Domain.Abstractions;
 using TaskFlow.Domain.Repositories;
 using TaskFlow.Domain.Services;
+using TaskFlow.Infrastructure.Data;
+using TaskFlow.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException(
+        "Connection string 'DefaultConnection' is not configured.");
+
+builder.Services.AddDbContext<TaskFlowDbContext>(options =>
+{
+    options.UseSqlServer(connectionString);
+
+    if (builder.Environment.IsDevelopment())
+    {
+        options.LogTo(
+            Console.WriteLine,
+            new[] { DbLoggerCategory.Database.Command.Name },
+            LogLevel.Information);
+    }
+});
 
 builder.Services
     .AddControllers()
@@ -33,9 +55,10 @@ builder.Services
     .ValidateOnStart();
 
 builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddSingleton<ITaskRepository, InMemoryTaskRepository>();
-builder.Services.AddSingleton<IProjectRepository, InMemoryProjectRepository>();
-builder.Services.AddSingleton<ITagRepository, InMemoryTagRepository>();
+
+builder.Services.AddScoped<ITaskRepository, EfTaskRepository>();
+builder.Services.AddScoped<IProjectRepository, EfProjectRepository>();
+builder.Services.AddScoped<ITagRepository, EfTagRepository>();
 
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
@@ -56,6 +79,10 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
+
+    await using var scope = app.Services.CreateAsyncScope();
+    var db = scope.ServiceProvider.GetRequiredService<TaskFlowDbContext>();
+    await DbSeeder.SeedAsync(db);
 }
 
 app.UseAuthorization();
